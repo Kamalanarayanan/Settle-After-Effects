@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settle</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div>
+    <div class="brand">Settle <span class="version">0.2.2</span></div>
+    <div class="tagline">Simple 2D physics for After Effects</div>
+  </div>
+  <button id="refresh" class="icon-button" title="Refresh composition and selection" aria-label="Refresh">↻</button>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Settle tools">
+  <button class="tab is-on" role="tab" data-panel="bodies" aria-selected="true"><span>1</span>Bodies</button>
+  <button class="tab" role="tab" data-panel="simulate" aria-selected="false"><span>2</span>Simulate</button>
+  <button class="tab" role="tab" data-panel="clean" aria-selected="false"><span>3</span>Clean</button>
+</nav>
+
+<div id="notice" class="notice" hidden></div>
+
+<main>
+  <section id="bodies" class="panel is-on">
+    <div class="comp-card">
+      <div>
+        <div class="eyebrow">Current composition</div>
+        <div id="comp-name" class="comp-name">No composition</div>
+        <div id="selection-summary" class="muted">Open a composition and select one or more layers.</div>
+      </div>
+    </div>
+
+    <div class="onboarding">
+      <span>① Select layers</span><i></i><span>② Choose behavior</span><i></i><span>③ Apply</span>
+    </div>
+
+    <div class="section">
+      <div class="section-title">How should the selected layer behave?</div>
+      <div class="role-grid" role="radiogroup" aria-label="Body behavior">
+        <button class="role is-on" data-role="dynamic">
+          <span class="role-icon dynamic-icon">●</span>
+          <strong>Dynamic</strong>
+          <small>Moves and collides</small>
+        </button>
+        <button class="role" data-role="static">
+          <span class="role-icon static-icon">■</span>
+          <strong>Passive</strong>
+          <small>Fixed floor or wall</small>
+        </button>
+        <button class="role" data-role="kinematic">
+          <span class="role-icon kine-icon">◆</span>
+          <strong>Kinematic</strong>
+          <small>AE animation pushes bodies</small>
+        </button>
+      </div>
+      <p id="role-help" class="help">Dynamic bodies are controlled by physics.</p>
+    </div>
+
+    <div id="material-section" class="section">
+      <div class="section-head">
+        <div class="section-title">Choose a feel</div>
+        <div id="preset-count" class="muted">8 presets</div>
+      </div>
+      <div class="preset-grid" role="radiogroup" aria-label="Material preset">
+        <button class="preset is-on" data-preset="balloon"><span class="swatch balloon"></span><strong>Balloon</strong><small>Floats and bounces</small></button>
+        <button class="preset" data-preset="rubber"><span class="swatch rubber"></span><strong>Rubber</strong><small>Light and springy</small></button>
+        <button class="preset" data-preset="plastic"><span class="swatch plastic"></span><strong>Plastic</strong><small>Everyday object</small></button>
+        <button class="preset" data-preset="metal"><span class="swatch metal"></span><strong>Metal</strong><small>Heavy with low bounce</small></button>
+        <button class="preset" data-preset="wood"><span class="swatch wood"></span><strong>Wood</strong><small>Firm with grip</small></button>
+        <button class="preset" data-preset="ice"><span class="swatch ice"></span><strong>Ice</strong><small>Very slippery</small></button>
+        <button class="preset" data-preset="foam"><span class="swatch foam"></span><strong>Foam</strong><small>Very light and soft</small></button>
+        <button class="preset" data-preset="cardboard"><span class="swatch cardboard"></span><strong>Cardboard</strong><small>Light with friction</small></button>
+      </div>
+      <div class="personality-control">
+        <div>
+          <strong>Natural motion</strong>
+          <small id="natural-motion-help">Smooth air drift and wobble</small>
+        </div>
+        <input id="natural-motion" type="range" min="0" max="1" step="0.05">
+        <output id="natural-motion-out"></output>
+        <button id="new-variation" class="mini-button" title="Create a different repeatable variation">New variation</button>
+      </div>
+    </div>
+
+    <details id="body-advanced" class="advanced">
+      <summary>Advanced body settings <span>Optional</span></summary>
+      <div class="advanced-body">
+        <label class="field">
+          <span>Collision shape</span>
+          <select id="shape">
+            <option value="box">Box / layer bounds</option>
+            <option value="circle">Circle</option>
+          </select>
+        </label>
+        <label class="field"><span>Density <small>collision weight</small></span><input id="density" type="number" min="0.01" max="20" step="0.05"></label>
+        <label class="field"><span>Bounciness</span><input id="bounce" type="range" min="0" max="1" step="0.01"><output id="bounce-out"></output></label>
+        <label class="field"><span>Friction</span><input id="friction" type="range" min="0" max="1" step="0.01"><output id="friction-out"></output></label>
+        <label class="field"><span>Air resistance</span><input id="air-drag" type="range" min="0" max="0.15" step="0.005"><output id="air-drag-out"></output></label>
+        <label class="field"><span>Gravity scale <small>negative floats up</small></span><input id="gravity-scale" type="number" min="-3" max="5" step="0.05"></label>
+        <label class="field"><span>Variation seed <small>preview-safe</small></span><input id="variation-seed" type="number" min="1" max="999999" step="1" value="1337"></label>
+        <div class="field-pair">
+          <label><span>Start velocity X</span><input id="velocity-x" type="number" step="10" value="0"></label>
+          <label><span>Start velocity Y</span><input id="velocity-y" type="number" step="10" value="0"></label>
+        </div>
+        <label class="field"><span>Start spin <small>°/second</small></span><input id="angular-velocity" type="number" step="10" value="0"></label>
+        <label class="check"><input id="fixed-rotation" type="checkbox"><span>Keep upright</span></label>
+      </div>
+    </details>
+
+    <button id="apply-body" class="primary large">Apply Balloon to selected</button>
+    <button id="remove-body" class="text-button">Remove physics from selected</button>
+
+    <div class="section assigned-section">
+      <div class="section-head">
+        <div class="section-title">Scene bodies</div>
+        <div id="body-count" class="muted">0 configured</div>
+      </div>
+      <div id="body-list" class="body-list">
+        <div class="empty">Configured layers will appear here.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="simulate" class="panel">
+    <div class="hero">
+      <div class="hero-icon">▶</div>
+      <div>
+        <strong>Preview before baking</strong>
+        <p>Settle simulates configured bodies here first. Your After Effects layers stay untouched until you click Bake.</p>
+      </div>
+    </div>
+
+    <div class="preview-wrap">
+      <canvas id="preview" width="640" height="360" aria-label="Physics preview"></canvas>
+      <div id="preview-empty" class="preview-empty">Configure at least one Dynamic body and one collider.</div>
+    </div>
+    <div class="transport">
+      <button id="play-preview" class="icon-button" disabled aria-label="Play preview">▶</button>
+      <input id="preview-frame" type="range" min="0" max="1" step="1" value="0" disabled>
+      <output id="preview-time">0:00</output>
+    </div>
+
+    <div class="simulation-actions">
+      <button id="run-preview" class="primary large">Preview physics</button>
+      <button id="bake" class="secondary large" disabled>Bake to keyframes</button>
+    </div>
+    <div id="simulation-summary" class="result"></div>
+
+    <details class="advanced">
+      <summary>World and quality settings <span>Advanced</span></summary>
+      <div class="advanced-body">
+        <label class="field"><span>Duration</span>
+          <select id="duration-mode">
+            <option value="workarea">Composition work area</option>
+            <option value="remaining">Current time to work-area end</option>
+          </select>
+        </label>
+        <label class="field"><span>Gravity <small>px/s²</small></span><input id="gravity" type="number" min="0" max="10000" step="10" value="981"></label>
+        <label class="field"><span>Horizontal wind <small>px/s²</small></span><input id="wind" type="number" min="-5000" max="5000" step="10" value="0"></label>
+        <label class="field"><span>Solver quality</span>
+          <select id="quality">
+            <option value="2">Fast · 2 substeps</option>
+            <option value="4" selected>Balanced · 4 substeps</option>
+            <option value="8">High · 8 substeps</option>
+          </select>
+        </label>
+        <label class="field"><span>Composition walls</span>
+          <select id="walls">
+            <option value="none">None</option>
+            <option value="floor">Floor only</option>
+            <option value="all">All four sides</option>
+          </select>
+        </label>
+        <label class="check"><input id="motion-blur" type="checkbox" checked><span>Enable motion blur on baked layers</span></label>
+      </div>
+    </details>
+
+    <div class="tip"><strong>Example:</strong> Apply <b>Passive</b> to a box, apply <b>Balloon</b> + <b>Dynamic</b> to another layer, then preview. The balloon floats upward and reacts when it hits the box.</div>
+  </section>
+
+  <section id="clean" class="panel">
+    <div class="hero">
+      <div class="hero-icon">◇</div>
+      <div>
+        <strong>Clean baked animation</strong>
+        <p>Remove unnecessary keyframes while keeping the motion visually close to the simulation.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Selected layers</div>
+      <label class="quality-slider">
+        <span>Accurate</span>
+        <input id="cleanup-strength" type="range" min="0" max="4" step="1" value="1">
+        <span>Fewer keys</span>
+      </label>
+      <div id="cleanup-label" class="choice-summary">Balanced · approximately 1 px tolerance</div>
+
+      <div class="property-checks">
+        <label class="check-card"><input id="reduce-position" type="checkbox" checked><span>Position</span></label>
+        <label class="check-card"><input id="reduce-rotation" type="checkbox" checked><span>Rotation</span></label>
+        <label class="check-card"><input id="reduce-scale" type="checkbox"><span>Scale</span></label>
+      </div>
+      <label class="check"><input id="smooth" type="checkbox" checked><span>Create editable smooth curves</span></label>
+      <button id="run-clean" class="primary large">Clean selected layers</button>
+    </div>
+    <div id="clean-summary" class="result"></div>
+    <div id="clean-list" class="body-list"></div>
+
+    <details class="advanced">
+      <summary>Layer safety check <span>Optional</span></summary>
+      <div class="advanced-body">
+        <p class="help">Checks for expressions, separated dimensions, 3D layers, existing keys, and off-centre anchor points.</p>
+        <button id="run-audit" class="secondary">Check selected layers</button>
+        <div id="audit-list" class="body-list compact"></div>
+      </div>
+    </details>
+  </section>
+</main>
+
+<footer class="studio-footer">
+  <button id="open-about" class="studio-signature" type="button" aria-haspopup="dialog" aria-controls="about-overlay">
+    <span class="studio-mark" aria-hidden="true"><i></i><i></i></span>
+    <span>A product of <strong>CRIT Studio</strong></span>
+    <span class="about-link">About</span>
+  </button>
+</footer>
+
+<div id="about-overlay" class="about-overlay" role="dialog" aria-modal="true" aria-labelledby="about-title" hidden>
+  <section class="about-card" tabindex="-1">
+    <button id="close-about" class="about-close" type="button" aria-label="Close About">×</button>
+    <div class="about-monogram" aria-hidden="true">CS</div>
+    <div class="about-kicker">Settle · 2D physics for After Effects</div>
+    <h2 id="about-title">CRIT Studio</h2>
+    <p class="about-product">A product of CRIT Studio</p>
+    <div class="about-details">
+      <p><span>Ideated &amp; created by</span><strong>Kamalanarayanan</strong></p>
+      <p><span>Contact</span><a href="mailto:kamalgeek92@gmail.com">kamalgeek92@gmail.com</a></p>
+    </div>
+    <p class="about-rights">All rights reserved by CRIT Studio.</p>
+  </section>
+</div>
+
+<script src="js/CSInterface.js"></script>
+<script src="js/matter.min.js"></script>
+<script src="js/physics.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

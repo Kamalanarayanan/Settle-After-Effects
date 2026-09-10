@@ -1,0 +1,11 @@
+{
+  "name": "settle-build",
+  "version": "0.2.2",
+  "private": true,
+  "description": "Build tooling for the Settle After Effects panel",
+  "scripts": {
+    "zxp": "node build-zxp.js",
+    "test": "node settle/test_host.js && node settle/test_physics.js"
+  },
+  "dependencies": { "zxp-sign-cmd": "^2.0.0" }
+}
