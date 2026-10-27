@@ -704,6 +704,7 @@ button[disabled] { opacity: .4; cursor: default; }
 }
 
 .about-overlay[hidden] { display: none; }
+.preview-empty[hidden] { display: none; }
 
 .about-card {
   position: relative;
